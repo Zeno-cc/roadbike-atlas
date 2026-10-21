@@ -78,7 +78,12 @@ git fetch origin && git rebase origin/main
 git push -u origin feat/rear-derailleur-cage
 gh pr create --fill        # 或到网页创建
 
-# 7. CI 绿灯 + 对方 approve → "Squash and merge" → 分支自动删除
+# 7. CI 绿灯 + 对方 approve → "Squash and merge" → 远端分支自动删除
+
+# 8. 合并后的本地清理
+git switch main && git pull --ff-only
+git branch -D feat/rear-derailleur-cage   # 必须用 -D：Squash 合并会新建提交，git 会误判旧分支"未合并"
+git fetch --prune                         # 清掉远端已删除分支的跟踪引用
 ```
 
 ### 分支命名
