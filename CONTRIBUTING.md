@@ -12,6 +12,11 @@
 2. **一个任务 = 一个分支 = 一个 PR**，分支寿命控制在 2–3 天内，做完立即合并。
 3. **共享契约文件（第四节）的改动必须在 PR 描述里写明影响范围**，由另一方重点核对。
 
+> **两条实操提醒（已实测）**
+>
+> - 分支保护对**协作者**强制生效；但 GitHub 对仓库 owner（管理员）默认放行直推 `main`，只在推送时给一行提示——所以"main 只走 PR"对 owner 是**自我约束**，而"禁止强推 / 禁止删分支"对所有人硬生效（owner 也一样，实测强推被拒）。
+> - 同事加入前，你自己 PR 的"需要 1 人 approve"无法自己满足（GitHub 不允许自批）。用管理员权限合并：`gh pr merge <PR号> --squash --admin`。若日后想连 owner 一起强制，到仓库 Settings → Branches 勾选 "Do not allow bypassing the above settings"。
+
 ## 二、环境准备
 
 ### 仓库 owner（首次）
