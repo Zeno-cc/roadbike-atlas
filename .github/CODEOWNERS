@@ -1,16 +1,16 @@
-# 共享契约文件的改动会自动请求 Zeno-cc 评审。
-# 同事加入后，把下面每行的 @Zeno-cc 补成 "@Zeno-cc @同事的GitHub用户名"，
-# 这样双方改动这些文件时都会自动请求对方 review。
+# 共享契约文件的改动会自动请求另一位评审（架构基线 §7.3 的文件清单）。
+# 两人都是 code owner：无论谁改动这些文件，GitHub 都会自动请求对方 review。
 
-/src/three/bikeConfig.ts        @Zeno-cc
-/src/three/interaction.tsx      @Zeno-cc
-/src/three/geometryHelpers.tsx  @Zeno-cc
-/src/three/studio.tsx           @Zeno-cc
-/src/three/materials.ts         @Zeno-cc
-/src/three/textures.ts          @Zeno-cc
-/src/three/modelRegistry.tsx    @Zeno-cc
-/src/index.css                  @Zeno-cc
-/content/schema.ts              @Zeno-cc
-/tests/                         @Zeno-cc
-/package.json                   @Zeno-cc
-/.github/workflows/             @Zeno-cc
+/src/three/bikeConfig.ts        @Zeno-cc @MrHJM111
+/src/three/BikeAssembly.tsx     @Zeno-cc @MrHJM111
+/src/three/interaction.tsx      @Zeno-cc @MrHJM111
+/src/three/geometryHelpers.tsx  @Zeno-cc @MrHJM111
+/src/three/studio.tsx           @Zeno-cc @MrHJM111
+/src/three/materials.ts         @Zeno-cc @MrHJM111
+/src/three/textures.ts          @Zeno-cc @MrHJM111
+/src/three/modelRegistry.tsx    @Zeno-cc @MrHJM111
+/src/index.css                  @Zeno-cc @MrHJM111
+/content/schema.ts              @Zeno-cc @MrHJM111
+/tests/                         @Zeno-cc @MrHJM111
+/package.json                   @Zeno-cc @MrHJM111
+/.github/workflows/             @Zeno-cc @MrHJM111
