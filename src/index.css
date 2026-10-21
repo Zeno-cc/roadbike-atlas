@@ -1,0 +1,230 @@
+@import "tailwindcss";
+
+/* ------------------------------------------------------------------ */
+/* 设计系统令牌（影棚产品页风格：暖白纸感 + 墨色文字 + 信号橙点缀）      */
+/* ------------------------------------------------------------------ */
+@theme {
+  --font-sans: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui,
+    -apple-system, sans-serif;
+  --font-serif: "Iowan Old Style", "Palatino", "Songti SC", "Noto Serif SC",
+    Georgia, serif;
+
+  /* 纸感暖白 */
+  --color-paper: #f3f0e8;
+  --color-paper-deep: #e9e5da;
+  /* 墨色 */
+  --color-ink: #17140f;
+  --color-ink-soft: #5f594e;
+  /* 信号橙（小面积强调：眉题、链接、开关） */
+  --color-signal: #c2410c;
+
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-paper text-ink antialiased;
+  font-feature-settings: "tnum" 1;
+}
+
+::selection {
+  background: rgba(194, 65, 12, 0.2);
+}
+
+/* ------------------------------------------------------------------ */
+/* 进场动效                                                            */
+/* ------------------------------------------------------------------ */
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes page-in {
+  from {
+    transform: translateY(6px);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes progress {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.animate-fade-up {
+  animation: fade-up 0.7s var(--ease-out-quart) both;
+}
+
+.animate-fade-in {
+  animation: fade-in 0.5s ease-out both;
+}
+
+/* 页面级进场：只做位移，永不让整页停在透明状态（后台标签暂停动画也安全） */
+.animate-page {
+  animation: page-in 0.45s var(--ease-out-quart) both;
+}
+
+.animate-progress {
+  animation-name: progress;
+  animation-timing-function: linear;
+  animation-fill-mode: both;
+}
+
+/* 骨架屏（浅色版） */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: rgba(23, 20, 15, 0.07);
+  border-radius: 12px;
+}
+
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+  animation: shimmer 1.7s infinite;
+}
+
+/* 交错延迟工具 */
+.stagger-1 { animation-delay: 0.06s; }
+.stagger-2 { animation-delay: 0.12s; }
+.stagger-3 { animation-delay: 0.18s; }
+.stagger-4 { animation-delay: 0.24s; }
+.stagger-5 { animation-delay: 0.3s; }
+.stagger-6 { animation-delay: 0.36s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-up,
+  .animate-fade-in,
+  .animate-progress,
+  .skeleton::after {
+    animation: none;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* 影棚舞台（与 3D 背景球同色值：暖白渐变 + 中心柔光 + 下部地面微暗）    */
+/* ------------------------------------------------------------------ */
+.stage-bg {
+  background:
+    radial-gradient(52% 44% at 62% 42%, #fdfbf7 0%, rgba(253, 251, 247, 0) 100%),
+    radial-gradient(120% 90% at 72% 6%, #f2efe6 0%, rgba(242, 239, 230, 0) 62%),
+    linear-gradient(180deg, #ece8dd 0%, #f4f1e9 42%, #f7f5ef 60%, #e7e3d8 100%);
+}
+
+/* ------------------------------------------------------------------ */
+/* 玻璃面板（浅色磨砂）                                                */
+/* ------------------------------------------------------------------ */
+.glass {
+  @apply rounded-2xl bg-white/70 ring-1 ring-ink/[0.08] backdrop-blur-xl;
+  box-shadow:
+    0 1px 0 0 rgba(255, 255, 255, 0.75) inset,
+    0 24px 48px -28px rgba(23, 20, 15, 0.28);
+}
+
+/* ------------------------------------------------------------------ */
+/* 自定义滑杆（墨色细轨 + 白色滑块）                                    */
+/* ------------------------------------------------------------------ */
+input[type="range"].stage-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 3px;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    #17140f var(--fill, 0%),
+    rgba(23, 20, 15, 0.16) var(--fill, 0%)
+  );
+  outline: none;
+  cursor: pointer;
+}
+
+input[type="range"].stage-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: #fffdf8;
+  border: 1.5px solid #17140f;
+  box-shadow: 0 2px 8px rgba(23, 20, 15, 0.25);
+  transition: transform 0.15s ease;
+}
+
+input[type="range"].stage-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.12);
+}
+
+input[type="range"].stage-slider::-moz-range-thumb {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: #fffdf8;
+  border: 1.5px solid #17140f;
+  box-shadow: 0 2px 8px rgba(23, 20, 15, 0.25);
+}
+
+/* ------------------------------------------------------------------ */
+/* 细滚动条（浅色面板内）                                              */
+/* ------------------------------------------------------------------ */
+.thin-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+.thin-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.thin-scroll::-webkit-scrollbar-thumb {
+  background: rgba(23, 20, 15, 0.16);
+  border-radius: 999px;
+}
+.thin-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(23, 20, 15, 0.3);
+}
+
+/* ------------------------------------------------------------------ */
+/* 编辑感细节                                                          */
+/* ------------------------------------------------------------------ */
+/* 英文衬线斜体小标题（参照影棚产品页的 "Turbofan / ground run"） */
+.editorial {
+  font-family: var(--font-serif);
+  font-style: italic;
+  letter-spacing: 0.01em;
+}
+
+/* 细发丝分割线 */
+.rule {
+  height: 1px;
+  background: rgba(23, 20, 15, 0.1);
+}
