@@ -1,0 +1,31 @@
+{
+  "id": "b-line-plan",
+  "name": "b-line-plan",
+  "title": "B 线工作拆解与开发评估",
+  "description": "把架构基线 §7.2/§11 中 B 角色的全部工作拆解为可执行任务，并产出开发评估与规范（透彻不大、一手材料、可独立验证）",
+  "status": "planning",
+  "dev_type": null,
+  "scope": null,
+  "package": null,
+  "priority": "P1",
+  "creator": "xzc",
+  "assignee": "xzc",
+  "createdAt": "2026-10-21",
+  "completedAt": null,
+  "branch": null,
+  "base_branch": "main",
+  "worktree_path": null,
+  "commit": null,
+  "pr_url": null,
+  "subtasks": [],
+  "children": [
+    "10-21-visual-baseline",
+    "10-21-materials-lighting",
+    "10-21-component-refine",
+    "10-21-high-precision-pilot"
+  ],
+  "parent": null,
+  "relatedFiles": [],
+  "notes": "",
+  "meta": {}
+}
