@@ -4,6 +4,8 @@
 
 2 人规模**不需要** `develop` 分支，也不需要长期特性分支。唯一会让协作变痛苦的模式是"大分支做两周"——分支活得越久，冲突越贵。
 
+> 分工上：本文档负责**日常协作流程**（分支、PR、冲突处理）；架构边界、数据契约与模型质量规范见 [docs/ARCHITECTURE_BASELINE.md](./docs/ARCHITECTURE_BASELINE.md)（技术基线）。
+
 ---
 
 ## 一、三条铁律
@@ -102,15 +104,15 @@ git fetch --prune                         # 清掉远端已删除分支的跟踪
 
 ## 四、模块所有权与并行切分
 
-原则：**一个人完整拥有一批文件**；文件归属不清的改动先开 PR 说明。建议的初始切分：
+原则：**一个人完整拥有一批文件**；文件归属不清的改动先开 PR 说明。下表与《技术架构基线》（[docs/ARCHITECTURE_BASELINE.md](./docs/ARCHITECTURE_BASELINE.md)）§7.2 的任务划分、§7.3 的共享契约清单保持一致；若两处出现冲突，以架构基线为准并同步修正本表。初始切分：
 
 | 归属 | 内容 |
 | --- | --- |
-| **A（车架/轮组 + 基建）** | `src/three/models/frameModels.tsx`、`wheelModels.tsx`；`studio.tsx` / `materials.ts` / `textures.ts` 视觉基建；`BikeViewer.tsx` / `interaction.tsx` 交互；CI 与部署 |
-| **B（传动/刹车/操控/座舱 + 内容）** | `src/three/models/drivetrainModels.tsx`、`brakeModels.tsx`、`cockpitModels.tsx`、`seatingModels.tsx`；`content/parts/*.ts` 全部内容数据；`parts/` 与 `glossary` 相关页面 |
-| **共享契约（改 = 开 PR + 对方 review）** | `bikeConfig.ts`、`interaction.tsx` 的 `EXPLODE` 表、`geometryHelpers.tsx`、`studio.tsx`、`materials.ts`、`textures.ts`、`modelRegistry.tsx`、`index.css` 的 `@theme`、`content/schema.ts`、`tests/`、`package.json` |
+| **A（车架/轮组 + 交互）** | `src/three/models/frameModels.tsx`、`wheelModels.tsx`；`BikeViewer.tsx` / `interaction.tsx` 交互；装配实例与模型接口（B1 主开发）；部署 |
+| **B（传动/刹车/操控/座舱 + 材质灯光 + 内容）** | `src/three/models/drivetrainModels.tsx`、`brakeModels.tsx`、`cockpitModels.tsx`、`seatingModels.tsx`；`studio.tsx` / `materials.ts` / `textures.ts` 材质与灯光；`content/parts/*.ts` 全部内容数据；`parts/` 与 `glossary` 相关页面 |
+| **共享契约（改 = 开 PR + 对方 review）** | `bikeConfig.ts`、`BikeAssembly.tsx`、`interaction.tsx` 的 `EXPLODE` 表、`geometryHelpers.tsx`、`studio.tsx`、`materials.ts`、`textures.ts`、`modelRegistry.tsx`、`index.css` 的 `@theme`、`content/schema.ts`、`tests/`、`package.json`、CI 与测试基础设施（与上表不同，CI 为两人共同负责） |
 
-页面层可按需再分：`src/pages/*` 一人一半（如 B 拿 `PartDetail` + `Glossary`，A 拿 `Explore` + `Home` + `AssemblyGuide` + `SystemPage`）；`src/components/ui.tsx` 视为共享，**只追加新组件，不重排已有组件**。
+内容与页面按 Issue 分配（架构基线 §7.2）；初期可参考：B 拿 `PartDetail` + `Glossary`，A 拿 `Explore` + `Home` + `AssemblyGuide` + `SystemPage`。`src/components/ui.tsx` 视为共享，**只追加新组件，不重排已有组件**。
 
 ## 五、共享契约文件的修改规则
 
@@ -118,6 +120,7 @@ git fetch --prune                         # 清掉远端已删除分支的跟踪
 
 - **`bikeConfig.ts` 是几何骨架**：改任何一个锚点（`headTop`、`bb`、`rearHub`…），头管、把立、前叉、走线、传动链条的贴合位置全都跟着变。改它 = 契约变更：PR 里写清影响哪些零件，合并前必须跑一遍 `npm run dev` 逐视角看整车（尤其头管/五通/后拨链线）。
 - **`EXPLODE` 表、`MODEL_BY_PART`、`@theme` 令牌、测试断言：只追加，不重排**。各自在自己的分区里加行，冲突概率接近 0。
+- **`BikeAssembly.tsx` 是整车装配入口**：调整零件挂载与层级属于结构性修改，同一阶段只由一个 PR 主导，动手前先声明范围（架构基线 §7.3）。
 - **`materials.ts` / `textures.ts` / `studio.tsx`：正交新增优先**（加一个 `paintXxx` 材质、加一张纹理、加一盏灯），改动已有光照数值属于全局视觉变更，需对方确认。
 - **`content/schema.ts`：改字段 = 27 个零件全受影响**，必须在 PR 里说明，并同步更新 `tests/content.test.ts` 的校验。
 - **`package.json` / `package-lock.json`：依赖变更单独开 PR**，不要和功能改动混在一起。`package-lock.json` 是生成文件，冲突时不要手工合并：

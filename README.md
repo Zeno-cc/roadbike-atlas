@@ -4,6 +4,7 @@
 
 > 视觉与渲染的品质标准、业内标杆评估与后续提升方向见 [DESIGN.md](./DESIGN.md)。
 > 多人协作的分支/PR 流程、模块所有权切分与冲突处理约定见 [CONTRIBUTING.md](./CONTRIBUTING.md)。
+> 技术架构基线（分层边界、零件与资产契约、精度分级、B0/B1 里程碑）见 [docs/ARCHITECTURE_BASELINE.md](./docs/ARCHITECTURE_BASELINE.md)。
 
 ## 功能
 
@@ -66,6 +67,8 @@ src/
 │   └── PartPreview.tsx      # 零件详情页的单件预览
 ├── components/ui.tsx   # 共享 UI（规格表/步骤列表/排查表/零件卡片等）
 └── pages/              # 六个路由页面
+
+docs/ARCHITECTURE_BASELINE.md   # 技术架构基线规范（架构边界、数据契约、精度分级、B0/B1 里程碑）
 
 tests/content.test.ts   # 内容完整性校验（零件齐全、字段非空、关联 id 合法、流程覆盖全部零件）
 ```
