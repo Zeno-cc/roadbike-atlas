@@ -4,7 +4,7 @@
 
 ## 1. 五类固定视角的可复现定义
 
-固定视口 **1600 × 1000**（aspect = 1.6）、`mode='explore'`、非播放态、dpr 钉住、等待帧数 ≥ 30（覆盖阴影预热 6 帧 + 接触阴影单次重绘 + 相机补间 1.0 s）。
+固定视口 **1600 × 1000**（aspect = 1.6）、`mode='explore'`、非播放态、dpr 钉住、等待条件 **≥ 1.2 s 且 ≥ 30 帧**。两者都要：1.2 s 覆盖 1.0 s 相机补间（`startTween` 默认 `duration=1.0`，`BikeViewer.tsx:91`），30 帧覆盖阴影预热 6 帧 + 接触阴影单次重绘 + 阻尼收敛；软渲染（SwiftShader）帧率不定，只按时间可能不足 30 帧、只按帧数可能不足 1.2 s，故取严。
 
 | # | 视角（§6.4） | 相机位置 | 注视点 | fov | 来源 / 是否需新增 |
 | --- | --- | --- | --- | --- | --- |
@@ -14,10 +14,10 @@
 | 4 | 车头与手变近景 | 由 `focusPart('shifter', 1.0)` 计算 | 手变包围盒中心 | 38 | **需 D1 钩子**（`shifter` 无预设按钮） |
 | 5 | 爆炸拆解视图 | 视角 1 × 1.40 拉远（试算） | 同视角 1 | 38 | **需新增**；前置 `setExplode(1.0)` |
 
-**视角 2 距离的试算依据**：整车 x 跨度 ≈ `[-0.755, +0.915]`（后轴 −0.415 − 轮半径 0.34；前轴 +0.575 + 0.34，见 `bikeConfig.ts` 的 `rearHub/frontHub/wheelR`）→ 宽度 1.67 m；竖直 fov 38°、aspect 1.6 → 水平半角 28.9°；`D = (1.67/2)/tan(28.9°) = 1.52 m`，留 20% 余量 → **起始值 1.85 m**。
-**标定程序（必须执行，不得直接采信试算值）**：采集后用像素边界法检查——整车左右边缘距画面边缘的余量应落在 **8–12%**；不足则按比例调整 `D` 重采，把最终值写进元数据。
+**视角 2 距离的试算依据**：整车 x 跨度 ≈ `[-0.755, +0.915]`（后轴 −0.415 − 轮半径 0.34；前轴 +0.575 + 0.34，见 `bikeConfig.ts` 的 `rearHub/frontHub/wheelR`）→ 宽度 1.67 m；竖直 fov 38°、aspect 1.6 → 水平半角 28.9°；`D = (1.67/2)/tan(28.9°) = 1.52 m`。**1.85 m 只是试算起点**（≈ 18–20% 余量，仅用于首次采样，不构成验收值）；唯一验收目标是标定后的 **8–12% 余量**。
+**标定程序（必须执行，不得直接采信试算值）**：采集后用像素边界法检查——整车左右边缘距画面边缘的余量应落在 **8–12%**；不足则按比例调整 `D` 重采。按 8–12% 反解（`h = D·tan(19°)·1.6`，余量 = `(h − 0.835)/h`），视角 2 的 `D` 应收敛到 ≈ **1.65–1.72 m**，即起点 1.85 m 首采就会被判偏大并触发回采；最终值写进元数据。
 
-**视角 5 的取景依据**：`EXPLODE` 表的最大位移约 0.88 m（`tire`，`interaction.tsx`），爆炸后包围盒在 z 向显著增长 → 相机距离按 1.40 倍试算，同样按 8–12% 余量标定；并确认无零件被裁切。
+**视角 5 的取景依据**：`EXPLODE` 表的最大位移 0.88 m（`tire: [0, -0.04, 0.88]`，`interaction.tsx` 的 `EXPLODE` 表），爆炸后包围盒在 z 向显著增长 → 相机距离**先按视角 1 的 1.40 倍试采**，再按 8–12% 余量标定收敛（试算倍数不是验收值）；并确认无零件被裁切。
 
 **静止态与爆炸态不可混采**：`ContactShadows` 在 `moving = playing || explode > 0` 时逐帧重绘、静止时只渲染一次（`BikeViewer.tsx:272-281`）——同一视角必须在同一状态下采集，且元数据记录 `explode` 值。
 
@@ -27,14 +27,14 @@
 | --- | --- | --- | --- |
 | 1 | 窄屏相机缩放 | `BikeViewer.tsx:149-155` | 固定视口 1600×1000；**不得模拟点击**（`pointerdown` 会置 `userMoved=true`，改变该逻辑走向），改用 D1 钩子 |
 | 2 | hero 模式自动旋转 | `:290`（`autoRotate={mode==='hero'}`） | 一律用 `explore` 模式 |
-| 3 | OrbitControls 阻尼 | `:285`（`dampingFactor 0.08`） | 程序化设相机后等待 ≥30 帧；如仍不稳定，经 D1 把 `dampingFactor` 临时设 0 |
+| 3 | OrbitControls 阻尼 | `:285`（`dampingFactor 0.08`） | 程序化设相机后等待 ≥1.2 s 且 ≥30 帧；仍不稳定则经 D1 的 `setDamping(0)` 置零，并把 `damping` 写入元数据 |
 | 4 | `PerformanceMonitor` 动态 dpr | `:444-450` | 经 D1 的 `setDpr()` 钉住（high 档 2 / low 档 1.5），并在元数据记录实际 dpr |
 | 5 | 阴影贴图预热 | `:209`（6 帧）、`studio.tsx:120-124`（4 帧） | 等待 ≥30 帧 |
-| 6 | 相机补间（1.0 s 缓动） | `:215-240` | 等待 ≥30 帧或 ≥1.2 s |
-| 7 | 接触阴影双路径 | `:272-281` | 同视角同状态采集；元数据记录 `explode` 与 `moving` |
+| 6 | 相机补间（1.0 s 缓动） | `:215-240`、`:91`（`duration=1.0`） | 等待 **≥1.2 s 且 ≥30 帧**（取严；补间时间由 `dt` 累积驱动，低帧率下 30 帧可能不足 1.2 s） |
+| 7 | 接触阴影双路径 | `:272-281` | 同视角同状态采集；元数据记录 `explode` 与 `moving`（字段见 §6） |
 | 8 | 装配动画（时间驱动） | `interaction.tsx` 的 `play()` | 不采集播放态 |
 | 9 | 纹理/几何随机性 | 全仓无 `Math.random`（grep 为空） | 无需处理；仍以 AC2 零像素差自证 |
-| 10 | 系统"减少动态效果"偏好 | `src/index.css:128`（`prefers-reduced-motion`） | 启动参数显式声明 `--force-prefers-reduced-motion`，并记入元数据 |
+| 10 | 系统"减少动态效果"偏好 | `src/index.css:128`（`prefers-reduced-motion`） | 启动参数显式声明 `--force-prefers-reduced-motion`，并记入元数据 `reducedMotion`（字段见 §6） |
 | 11 | UI 悬浮层（卡片、滑杆、提示条） | `BikeViewer.tsx:474-674` | 截图只裁 **canvas 区域**（`clip` 到 canvas bounding box），不包含 UI —— 避免 UI 改动造成假 diff |
 | 12 | 设备像素比与窗口尺寸 | — | 启动参数 `--force-device-scale-factor=1` + 固定 `--window-size` |
 
@@ -45,7 +45,8 @@
 - 依赖：`npm i -D puppeteer-core`（**不下载 Chromium**，复用已安装的 Chrome 154）
 - 启动参数：`--headless=new`、`--use-angle=swiftshader`（软件渲染，跨机器最可复现）、`--force-device-scale-factor=1`、`--hide-scrollbars`、`--force-prefers-reduced-motion`、`--window-size=1600,1000`
 - 页面来源：**必须用 `npm run build && npm run preview`（端口 4173）**，不用 dev server（HMR 与源码映射引入额外不确定性）
-- 设视角：`page.evaluate` 调 D1 钩子 → 等待 `frameCount` 增长 ≥30 → 截图 `clip` 到 canvas
+- **激活钩子**：`page.evaluateOnNewDocument(() => { window.__atlasCapture = true })`（在应用脚本执行前注入，最可复现）；**不要**依赖 `location.search` 判定——路由是 HashRouter（`src/main.tsx:3,9`），`/#/explore?capture=1` 的 query 落在 hash 内、`location.search` 恒为空，钩子侧只认 `window.__atlasCapture` 或 `location.href.includes('capture=1')`
+- 设视角：`page.evaluate` 调 D1 钩子 → 等待 **≥1.2 s 且 ≥30 帧** → 截图 `clip` 到 canvas
 - 脚本路径：`docs/visual-baseline/scripts/capture-baseline.mjs`（与基准批次一起版本化）
 
 **两种渲染后端的用途区分（必须记录在元数据）**：

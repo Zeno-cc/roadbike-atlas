@@ -64,23 +64,25 @@
 | 9 | 前后平装座 z | 前 -0.052（`frameModels.tsx:1061`，A）／后 -0.014（`:912`，A） | 同一碟片平面应唯一 | 相差 38mm（至少一处错） |
 | 10 | 油管外径 | 8.4mm（`brakeModels.tsx:175` r0.0042）／9mm（`:623` r0.0045） | ~5mm（`brakes.ts:362`） | 1.7–1.8× |
 | 11 | 卡钳固定螺栓 | Ø7mm（`:147-150` r0.0035） | M5（`brakes.ts:22`） | +2mm |
-| 12 | 车把管径 | 23mm（`cockpitModels.tsx:92` ← `bikeConfig.ts:71`）；把立夹环 Ø23.6mm（`:333-343`）；手变夹环 Ø31mm（`drivetrainModels.tsx:1039`） | 31.8mm（`content/parts/cockpit.ts:21`）；`bikeConfig.ts:76` `clampR=0.0159` 零引用 | 手变处间隙 8mm |
+| 12 | 车把管径 | 23mm（`cockpitModels.tsx:92` ← `bikeConfig.ts:71`）；把立夹环 Ø23.6mm（`:333-343`）；手变夹环 Ø31mm（`drivetrainModels.tsx:1039`） | 31.8mm（`content/parts/cockpit.ts:21`）；`bikeConfig.ts:76` `clampR=0.0159` 与 `:70` `tubeR=0.0119` 均**零引用**（grep 实测 0 命中） | 手变处间隙 8mm |
 | 13 | 把带径向厚度 | 5mm（`:514` r0.0165 − `:92` r0.0115） | 1.5–3.5mm（`cockpit.ts:248`） | 1.4–3.3× |
 | 14 | 塔基重复建模 | hub r16.5×36mm（`wheelModels.tsx:56-57`，A）／cassette r15.5×48mm（`drivetrainModels.tsx:603`，B） | §4.4 单点生成 | 半径差 1mm、长度差 12mm |
 | 15 | 盘钉/减重孔数量 | 各 4（`:294-296,389`） | 注释称 5（`:356,388`） | 注释失效 ×3 处 |
 | 16 | 把带起点 | 0.18（`:33` 代码） | 注释称 0.11（`:32`）；`DESIGN.md:28`「从手变处起缠」支持 0.18 | 注释失效 |
 | 17 | 卡钳螺栓间距 | ±13.5mm（27mm，`brakeModels.tsx:147`） | A 的平装座同为 ±13.5mm（`frameModels.tsx:919,1066`）✓；官方值 `[未获取]` | 一致 |
 | 18 | 盘爪 BCD | 110mm（`:390-391` r=0.055） | 110mm 四爪（`drivetrain.ts:22`）✓ | 一致 |
-| 19 | 齿片节圆半径 | 50T=101.06mm／34T=68.72mm（`bikeConfig.ts:87-88`） | 由 12.7mm 节距推算 ✓ | 一致（≤0.05mm） |
+| 19 | 齿片节圆半径 | 50T=0.101m／34T=0.069m（`bikeConfig.ts:87-88`，被 `drivetrainModels.tsx:334,336` 直接引用） | 由 12.7mm 节距推算：50T=101.06mm／34T=68.72mm（`pitchRadius`，`drivetrainModels.tsx:70`） | **不一致**：50T +0.06mm、34T +0.28mm，均超本任务 ±0.05mm 口径（配置值偏小；修法：配置改为推算值，或记录偏差并给出依据） |
 | 20 | 来令片单侧间隙 | 0.30mm（`brakeModels.tsx:410-411`） | 0.2–0.3mm（`brakes.ts:25`） | 一致（上限） |
 | 21 | 前拨外导板下缘距大盘齿尖 | 3.0mm（`:851-857` + 齿尖 y=0.3745） | 1–3mm、常见 2mm（`drivetrain.ts:480`） | 一致（上限） |
+| 22 | 链条-导轮啮合（**穿心**） | 链条路径把两导轮中心直接当控制点（`drivetrainModels.tsx:658-659` ← `:637-638`）；链平面 z=0.049（`:634`）≠ 导轮中面 z=0.05 | 链条应沿导轮节圆切线进出（有包角），且链平面与导轮中面共面 | 包角 0°；链条中心线穿过导轮中心 → 穿过轮芯实体 r=0.0076（`:981-984`）；即使按现有硬编码节圆 0.0095 也不成立 |
+| 23 | 配置层零引用（死）字段 | `B.stem.*`、`B.crank.qFactorHalf`、`B.crank.armW`、`B.caliper.flatMountZ`（`bikeConfig.ts:103`）、`B.derailleur.rdBody`、`B.rotor.r/thickness`、`B.cassette.width`、`B.bar.tubeR`（`:70`）/`reach`/`drop`、`B.chain.inner/outer`（`bikeConfig.ts:25-110`） | 逐字段 grep 实测 0 引用（唯一例外：`B.rotor.offsetZ` 在用，`brakeModels.tsx:310-311`） | 对应尺寸在模型文件里被重新硬编码 → 违反 §5.2（同 `prd.md`「现状硬结论 5」） |
 
 ## 3. 一手材料清单（每零件应依据的厂家资料类型 + 当前状态）
 
 **通用获取路径建议**（不做成"必须联网"的阻塞项）：
 
 - Shimano：`si.shimano.com` 的 Dealer's Manual（DM-××）与 SI 爆炸图（EV-××）+ 官方产品页规格。**实测 HTTP 403**
-  → `[未获取]`。人工路径：浏览器下载 PDF 后放入本任务目录 `research/manuals/`（由用户提供，避免编造型号）。
+  → `[未获取]`。人工路径：浏览器下载 PDF 后放入本任务目录 `research/manuals/`（**目录待创建**，当前仅有 `research/evidence.md`；PDF 由用户提供，避免编造型号）。
 - SRAM：`sram.com/en/service` 的 Manuals & Documents 与 Spare Parts Catalog（实测可达，URL 形态
   `/en/service/spc-links/<name>`、`docs.sram.com/en-US/publications/...`）；具体公路件手册本次**未取回** → `[未获取]`。
 - 项目内一手材料（**当前唯一可用**）：`content/parts/{drivetrain,brakes,cockpit}.ts` 的 `specs` 段（项目自建知识层）、
@@ -108,29 +110,29 @@
 **容差口径（本任务约定，非外部标准）**：几何断言对 ≥10mm 的标称尺寸取 `±0.5mm`，<10mm 取 `±1%`（更严者优先）；
 角度 `±0.5°`；像素级差异不做自动判定，仅截图人眼评审（`ARCHITECTURE_BASELINE.md:325`）。
 
-| 尺寸 | 当前模型值（行号） | 目标 | 出处类型 |
-| --- | --- | --- | --- |
-| 链条节距 12.7mm | `bikeConfig.ts:99` | 保持不变（全仓唯一链条基准） | 项目配置（官方出处 `[未获取]`） |
-| 大盘/小盘节圆半径 | 101.06／68.72mm（`:87-88`） | 维持（与节距自洽） | 由节距推导 |
-| 盘爪 BCD | 110mm（`drivetrainModels.tsx:390-391`） | 110 ± 0.5mm，盘钉 4 | `drivetrain.ts:22`（内容层） |
-| 曲柄长度 | 172.5mm（`bikeConfig.ts:86`） | 172.5 ± 0.5mm | `drivetrain.ts:24` |
-| Q 值 | 194mm（`:442`） | 145–155mm | `drivetrain.ts:27` |
-| 链条中心线 | 49mm（`:634`） | 44.0–45.0mm，且与大盘平面一致 | `drivetrain.ts:26`（12 速 44.5mm） |
-| 飞轮齿数序列 | 34…11（`bikeConfig.ts:93`） | 保持 12 片 | `drivetrain.ts:246` |
-| 飞轮齿片间距 | 3.727mm（`:544`） | `[待查手册]`（先修间隔环填满间隙） | — |
-| 导轮齿数/齿距 | 11T／5.43mm（`:898`） | 11–13T（`drivetrain.ts:613`）；齿距 = 链距 ± 0.02mm | 内容层 + 节距 |
-| B 间隙（导轮↔最大飞轮） | 未建模 | 5–6mm（`drivetrain.ts:610`） | 内容层 |
-| 碟片直径/厚度 | 163mm／1.8mm（`brakeModels.tsx:209-211`） | 160 ± 0.5mm／1.8 ± 0.05mm | `brakes.ts:145-146` |
-| 卡钳活塞数 | 2（`:129-141`） | 2 | `brakes.ts:24` |
-| 来令片单侧间隙 | 0.30mm（`:410-411`） | 0.20–0.30mm | `brakes.ts:25` |
-| 卡钳螺栓 | Ø7mm（`:147`） | M5（Ø5 ± 0.1mm） | `brakes.ts:22` |
-| 卡钳螺栓间距 | 27mm（±13.5，`:147`） | 与 A 的平装座一致；官方值 `[未获取]` | 双方一致性 |
-| 油管外径 | 8.4／9mm（`:175,623`） | 5 ± 0.5mm | `brakes.ts:362` |
-| 车把夹持口径 | 23mm（`cockpitModels.tsx:92`） | 31.8 ± 0.2mm（待 D3 裁决） | `cockpit.ts:21` |
-| 车把 Drop/Reach | 128／80mm（`bikeConfig.ts:68-69`） | 128／80 ± 2mm | `cockpit.ts:23-24`（紧凑把） |
-| 把立角 | 未实现（`:75` 零引用） | −6 ± 0.5° | `cockpit.ts:135` |
-| 把带厚度 | 5mm（`:514`） | 1.5–3.5mm | `cockpit.ts:248` |
-| 塔基长度/半径 | 双份（`wheelModels.tsx:56-57` / `drivetrainModels.tsx:603`） | 单点生成，36.85 ± 0.5mm（公路 11/12 速） | `drivetrain.ts:249` |
+| 尺寸 | 当前模型值（行号） | 目标 | 出处类型 | 来源等级（§5.3） |
+| --- | --- | --- | --- | --- |
+| 链条节距 12.7mm | `bikeConfig.ts:99` | 保持不变（全仓唯一链条基准） | 项目配置（官方出处 `[未获取]`） | `estimated`（项目配置；1/2 英寸行业标准待核 → `[待查手册]`） |
+| 大盘/小盘节圆半径 | 0.101／0.069m（`bikeConfig.ts:87-88`） | 推算值 101.06／68.72mm，或记录 +0.06／+0.28mm 偏差并给出依据（见 §2 #19） | 由节距推导 | `estimated`（由节距推导） |
+| 盘爪 BCD | 110mm（`drivetrainModels.tsx:390-391`） | 110 ± 0.5mm，盘钉 4 | `drivetrain.ts:22`（内容层） | `estimated`（内容层） |
+| 曲柄长度 | 172.5mm（`bikeConfig.ts:86`） | 172.5 ± 0.5mm | `drivetrain.ts:24` | `estimated`（内容层） |
+| Q 值 | 194mm（`:442`） | 145–155mm | `drivetrain.ts:27` | `estimated`（内容层） |
+| 链条中心线 | 49mm（`:634`） | 44.0–45.0mm，且与大盘平面一致 | `drivetrain.ts:26`（12 速 44.5mm） | `estimated`（内容层） |
+| 飞轮齿数序列 | 34…11（`bikeConfig.ts:93`） | 保持 12 片 | `drivetrain.ts:246` | `estimated`（内容层） |
+| 飞轮齿片间距 | 3.727mm（`:544`） | `[待查手册]`（先修间隔环填满间隙） | — | `[待查手册]` |
+| 导轮齿数/齿距 | 11T／5.43mm（`:898`） | 11–13T（`drivetrain.ts:613`）；齿距 = 链距 ± 0.02mm | 内容层 + 节距 | `estimated`（内容层 + 由节距推导） |
+| B 间隙（导轮↔最大飞轮） | 未建模 | 5–6mm（`drivetrain.ts:610`） | 内容层 | `estimated`（内容层） |
+| 碟片直径/厚度 | 163mm／1.8mm（`brakeModels.tsx:209-211`） | 160 ± 0.5mm／1.8 ± 0.05mm | `brakes.ts:145-146` | `estimated`（内容层；ISO 值待核 → `[待查手册]`） |
+| 卡钳活塞数 | 2（`:129-141`） | 2 | `brakes.ts:24` | `estimated`（内容层） |
+| 来令片单侧间隙 | 0.30mm（`:410-411`） | 0.20–0.30mm | `brakes.ts:25` | `estimated`（内容层） |
+| 卡钳螺栓 | Ø7mm（`:147`） | M5（Ø5 ± 0.1mm） | `brakes.ts:22` | `estimated`（内容层） |
+| 卡钳螺栓间距 | 27mm（±13.5，`:147`） | 与 A 的平装座一致；官方值 `[未获取]` | 双方一致性 | `[未获取]` |
+| 油管外径 | 8.4／9mm（`:175,623`） | 5 ± 0.5mm | `brakes.ts:362` | `estimated`（内容层） |
+| 车把夹持口径 | 23mm（`cockpitModels.tsx:92`） | 31.8 ± 0.2mm（待 D3 裁决） | `cockpit.ts:21` | `estimated`（内容层） |
+| 车把 Drop/Reach | 128／80mm（模型写在 `cockpitModels.tsx:48,50` 控制点；`bikeConfig.ts:68-69` 两字段**零引用**，见 §2 #23） | 128／80 ± 2mm | `cockpit.ts:23-24`（紧凑把） | `estimated`（内容层） |
+| 把立角 | 未实现（`:75` 零引用） | −6 ± 0.5° | `cockpit.ts:135` | `estimated`（内容层） |
+| 把带厚度 | 5mm（`:514`） | 1.5–3.5mm | `cockpit.ts:248` | `estimated`（内容层） |
+| 塔基长度/半径 | 双份（`wheelModels.tsx:56-57` / `drivetrainModels.tsx:603`） | 单点生成，36.85 ± 0.5mm（公路 11/12 速） | `drivetrain.ts:249` | `estimated`（内容层） |
 
 ## 5. 验证方法
 
@@ -170,12 +172,18 @@
 
 ### 5.3 爆炸视图回归
 
-- **可自动化的部分**：断言 `Object.keys(EXPLODE)` ⊇ `Object.keys(MODEL_BY_PART)`（`interaction.tsx:20-54`、
-  `modelRegistry.tsx:20-54`）—— 现有 `tests/content.test.ts` **完全没有覆盖**（13 个 `it()` 全在内容层），
-  这是 §8.2「模型注册测试」的最小可用版本，且只需 import 两个模块；`interaction.tsx` 会连带 import
-  `content/parts` 与 `bikeConfig`（无 `materials`），Node 下可 import（需在 PR 中确认）。
+- **可自动化的部分**：断言 `Object.keys(EXPLODE)` **＝** `Object.keys(MODEL_BY_PART)`（`interaction.tsx:20-54`、
+  `modelRegistry.tsx:20-54`）—— 实测两表键集合**完全相等**（各 27 项，14 个 B 零件全覆盖，键名逐一对应），
+  故 AC9 写「相等」而非「⊇」；现有 `tests/content.test.ts` **完全没有覆盖**（13 个 `it()` 全在内容层），
+  这是 §8.2「模型注册测试」的最小可用版本。
+- **可运行方式（实测约束）**：`interaction.tsx` 的 import 链只有 react / three / `content/parts` / `content/systems` /
+  `bikeConfig`（`:1-13`，无 `materials`），Node 下可 import（待 PR 实测确认）；但 **`modelRegistry.tsx:2-15`
+  引入全部模型文件 → `../materials` → `textures.ts:20` 的 `document.createElement`，Node 下同样抛
+  `ReferenceError: document is not defined`（与 §5.1 同一条根因链，**不可直接 import**）** → 该断言改为**文本抽取**：
+  `node:fs` 读两份源码、按上列行区间取键名后比较，`environment: 'node'` 可直接运行（步骤见 `implement.md` S2b）。
 - **单件位移断言**：`group.position = base + explode × f`（`interaction.tsx:169-173`）是纯算术，可用
-  `f=1` 断言位移模长 = `|EXPLODE[id]|`；当前 14 件位移模长（爆炸视图可见度代理）：
+  `f=1` 断言位移模长 = `|EXPLODE[id]|`；当前 14 件位移模长（爆炸视图可见度代理；排序：0.864 第 1、0.679 第 3、
+  0.505 第 6；`implement.md` S2b 落成 ±1e-6 回归断言）：
   rotor 0.864 / cassette 0.780 / brake-pads 0.679 / rear-derailleur 0.525 / bar-tape 0.513 / brake-caliper 0.505 /
   crankset 0.462 / stem 0.449 / chain 0.410 / front-derailleur 0.405 / handlebar 0.388 / brake-lever 0.384 /
   pedal 0.323 / shifter 0.261（m）。
@@ -203,7 +211,7 @@
 
 | 序 | 零件（组） | 理由（代理值） | 前置依赖 |
 | --- | --- | --- | --- |
-| 1 | 卡钳 + 碟片 + 来令片（一套） | 唯一存在**零件间装配错误**（§2 #8）；EXPLODE 0.505/0.864/0.679（最高三件之一）；内容密度最高（1112/787/887）；三者共享 `CALIPERS`/`ROTOR`/`PAD` 常数，必须一次改完 | 无（除 D3 碟片平面裁决） |
+| 1 | 卡钳 + 碟片 + 来令片（一套） | 唯一存在**零件间装配错误**（§2 #8）；EXPLODE 0.864／0.679／0.505（位移排序第 1／第 3／第 6，§5.3）；内容密度最高（1112/787/887）；三者共享 `CALIPERS`/`ROTOR`/`PAD` 常数，必须一次改完 | 无（除 D3 碟片平面裁决） |
 | 2 | 后拨 | 结构最复杂（缺失 6 项机构，含 H/L 限位螺丝、卷簧、枢轴）+ 尺度硬错误（§2 #1）；内容密度 771；视角 3 主角 | 无（除 D3） |
 | 3 | 手变 + 刹把（成对） | 同一实体双份建模（§4.4）必须先裁决；缺棘轮/主缸油路；内容密度 769/972；但 EXPLODE 最低 0.261/0.384 → 查看频率低 | **D2/D3 + 所有权裁决** |
 | 4 | 飞轮 | EXPLODE 0.780（第二高）+ 间隔环透缝（§2 #6）+ 齿形教学 | 塔基归属（D5） |

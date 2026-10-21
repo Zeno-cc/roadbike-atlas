@@ -45,7 +45,7 @@
 
 ## 归属待确认（需用户裁决，不在本任务范围）
 
-- 基线 §7.2 的六行分工中**没有「座舱」行**（全文未出现座舱/坐垫/座管归属，`docs/ARCHITECTURE_BASELINE.md:338-350`）；
+- 基线 §7.2 的七行分工中**没有「座舱」行**（全文未出现座舱/坐垫/座管归属，`docs/ARCHITECTURE_BASELINE.md:338-350`）；
   而 `CONTRIBUTING.md:112` 把 `seatingModels.tsx` 归 B。`CONTRIBUTING.md:107` 自述「冲突时以架构基线为准并同步修正本表」，
   但基线没有可对齐的条目 → **冲突无法自动消解，需用户裁决**。
 - 本任务仅登记该事项；在裁决前不评估、不改动 `seatingModels.tsx`（3 个零件：seatpost / saddle / seatpost-clamp）。

@@ -19,19 +19,20 @@
 | `mat.ti` | 62 | `#bcbdc0` m0.92 r0.32 | 坐垫轨 1 |
 | `mat.drivetrain` | 64 | `#d3d8de` m1.0 r0.22 | 链条/飞轮 6 |
 | `mat.disc` | 66 | `#b3b9c1` m1.0 r0.30 ×`brushed` | 碟片 1 |
-| `mat.rubber` | 68-74 | `#141518` m0 r0.94 + `tread` ns0.5 | 轮胎/把带/来令片背 1 |
+| `mat.rubber` | 68-74 | `#141518` m0 r0.94 + `tread` ns0.5 | 外胎（`wheelModels.tsx:632`）1；把带实际用 `mat.tape`（`cockpitModels.tsx:515`）、来令片背用 `mat.soft`（`brakeModels.tsx:452,580`）——`materials.ts:67` 的用途注释已过时 |
 | `mat.soft` | 76 | `#0e0f12` m0 r0.82 | 手变套/坐垫底 14 |
 | `mat.saddle` | 78-84 | `#101114` m0 r0.78 + `carbonWeave` ns0.08 | 坐垫面 1 |
 | `mat.tape` | 86-92 | `#232833` m0 r0.88 + `tapeRib` ns0.4 | 把带 1 |
 | `mat.inner` | 94 | `#2a2c30` m0 r0.90 | 内胎 1 |
 | `mat.housing` | 96 | `#17181c` m0.2 r0.60 | 线管/油管 6 |
 | `mat.friction` | 98 | `#4b4f56` m0.3 r0.70 | 来令片摩擦材料 1 |
-| `matP.paintMarine` | 109-116 | `#123a86` m0.78 r0.30 cc1.0 ccR0.06 env1.3 | 车架主漆（`frameModels.tsx:732-924`）15 |
+| `matP.paintMarine` | 109-116 | `#123a86` m0.78 r0.30 cc1.0 ccR0.06 env1.3 | 车架主漆（`frameModels.tsx:732-914`）**12**（不带 `\b` 的 grep 会并入 `paintMarineDark` 得 15，勿混用） |
 | `matP.paintMarineDark` | 118-125 | `#0c2a63` m0.78 r0.32 cc1.0 ccR0.08 env1.25 | 前叉（`frameModels.tsx:1023-1040`）3 |
 | `matP.carbonGloss` | 127-136 | `#22242a` m0.45 r0.38 cc0.85 ccR0.12 `carbonWeave` ns0.2 env1.1 | 轮圈/一体把/座管/曲柄 11 |
 
 模型侧材质声明共 **212 处**（`<meshStandardMaterial>` 190 + `<meshPhysicalMaterial>` 22；
-brake32 / drivetrain62 / frame44 / wheel31 / seating11 / cockpit10；循环内会更多）。
+其中 standard 分文件为 brake32 / cockpit10 / drivetrain62 / frame44 / seating11 / wheel31，
+physical 分文件为 frame15 / seating3 / wheel2 / cockpit1 / drivetrain1；循环内会更多）。
 每处 JSX 材质元素生成**一个独立实例**（R3F `createInstance` → `new target(...)`），
 所以 `interaction.tsx:179-203` 逐 mesh 改写 `emissive/opacity` 不会串件。
 
@@ -54,7 +55,8 @@ brake32 / drivetrain62 / frame44 / wheel31 / seating11 / cockpit10；循环内�
 | `floor-radial` | 512²（231-242） | 1 MiB | 颜色 | 未声明 | — | **0（死代码，深色影棚遗留）** |
 | `brand-glow` | 512²（245-253） | 1 MiB | 颜色 | 未声明 | — | **0（死代码）** |
 
-- 生成总量 **548,864 px**（≈0.55 MP，≈2.09 MiB），全部在**模块加载时同步**执行（`materials.ts:19-27` 顶层调用）；
+- 生成总量 **548,864 px**（≈0.55 MP，≈2.09 MiB；此数**不含** `floor-radial`/`brand-glow`——两者是惰性工厂且从未被调用，
+  从不生成），在用纹理于**模块加载时同步执行**（`materials.ts:19-27` 顶层调用；`backdrop-v` 例外，由 `studio.tsx:38` 在组件渲染时调用）；
   法线贴图每像素 4 次高度采样。缓存 `cache`（`textures.ts:9`）返回值是**共享可变单例**。
 - 法线/灰度贴图统一 `RepeatWrapping`（`textures.ts:47,76`）；贴花与背景用默认 `ClampToEdgeWrapping`。
 - 全仓无任何 `repeat`/`offset`/`rotation` 设置 → 平铺完全由几何 UV 决定（见 §3.4）。
@@ -103,7 +105,7 @@ Vignette(0.3/0.32)、`multisampling=4`（`studio.tsx:155-194`）；
 | G8 | 3 处贴花内联材质参数互不相同（r0.35/0.50/0.45） | §1.1 内联材质 | §6.1 一致性 | 中 |
 | G9 | 碳纹物理尺度未受控：同一张贴图在轮圈与下管的单元尺寸相差约 11×（估算） | `textures.ts:87-103` + 几何 UV 0..1 | §6.1 | 中 |
 | G10 | 4 预设 + 2 纹理零引用（死代码） | `materials.ts:31,33,35,43`；`textures.ts:231,245` | §6.2 资源管理 | 低 |
-| G11 | 动态资源释放责任未定义：模块级纹理永不 `dispose`；`useMemo` 自建几何是否被 R3F 回收 `[未验证]` | `materials.ts:19-27`、`frameModels.tsx:347` | §6.2 释放责任 | 中 |
+| G11 | 动态资源释放责任未定义：模块级纹理永不 `dispose`；`useMemo` 自建几何是否被 R3F 回收 `[未验证]` | `materials.ts:19-27`、`frameModels.tsx:211/503/581/986`（`useMemo` 自建几何处） | §6.2 释放责任 | 中 |
 | G12 | 文档漂移：`DESIGN.md` §四 写 `matP.paintBlue/paintBlueDark`（不存在）、Bloom 阈值 0.82（实际 0.95）、曝光 1.08（整车实际 1.02） | `DESIGN.md` §三/§四 vs 代码 | 基线 §9.2 | 中 |
 | G13 | 程序化纹理同步生成 0.55 MP 阻塞首屏，成本未测 | `textures.ts:20-45` | §6.3 | 低 |
 
@@ -176,8 +178,8 @@ sRGB→linear 解码**（`WebGLTextures.js:230`：RGBA+UnsignedByte → 内部�
 
 ### 3.4 UV、切线空间与平铺
 
-- **切线空间**：本仓库几何**无任何 `tangent` 属性**（grep 为空）→ three 走 `getTangentFrame`
-  （屏幕空间导数 TBN，`normal_fragment_begin.glsl.js:30-38`、`normalmap_pars_fragment.glsl.js:20-45`）。推论：
+- **切线空间**：本仓库几何**无 `geometry.attributes.tangent`**（属性层面为空）→ three 走 `getTangentFrame`
+  （屏幕空间导数 TBN，`normal_fragment_begin.glsl.js:30-38`、`normalmap_pars_fragment.glsl.js:20-45`）。注意 `frameModels.tsx:366` 出现的 `tangent` 是**曲线切线**的局部变量（`path.getTangent(t)`），与几何切线属性无关，勿混为一谈。推论：
   ① 法线贴图「+Y」绑定**几何 UV 的 +V**，不是几何的「上」；② 对网格做镜像/负缩放会翻转 G 通道方向
   （本仓库 −Z 侧贴花用 `rotation={[0,π,0]}` 旋转物体，不是负缩放，且贴花不用 `normalMap`，暂不受影响）；
   ③ UV 常量/退化时 `det == 0` → 法线扰动被完全抑制，因此**必须有非退化 UV**；
@@ -299,7 +301,7 @@ export const STUDIO_PRESET = {
 | A8 | 五视角截图产物存在且尺寸固定 | 文件存在性 + 尺寸（不比像素） | 需先有截图目录约定（D2） |
 
 **关键约束**：`materials.ts`/`textures.ts` 在**模块顶层**调用 `document.createElement('canvas')`
-（`materials.ts:19-27` → `textures.ts:20`），而 `vite.config.ts:7` 的测试环境是 `environment: 'node'`，
+（`materials.ts:19-27` → `textures.ts:20`），而 `vite.config.ts:9` 的测试环境是 `environment: 'node'`，
 且未安装 `jsdom`/`canvas`。因此 **vitest 里 `import '../src/three/materials'` 会抛
 `ReferenceError: document is not defined`**。所以：立即可做的检查一律走**文本解析**（不 import）；
 若要做真正的数值断言，需先把预设拆成**纯数据模块**（无 DOM 依赖），纹理生成保持独立
