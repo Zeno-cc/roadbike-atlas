@@ -5,7 +5,7 @@
 
 ## A. 材质预设与引用
 
-1. 预设总数 **20**：`mat` 17 个 + `matP` 3 个 — `src/three/materials.ts:29-105`（mat）、`:107-136`（matP）
+1. 预设总数 **20**：`mat` 17 个 + `matP` 3 个 — `src/three/materials.ts:29-99`（mat）、`:107-136`（matP）
 2. 逐条行号：`paintBlue:31`、`paintBlueDark:33`、`carbon:35-41`、`carbonRaw:43-49`、`alu:51-56`、`aluBlack:58`、`steel:60`、`ti:62`、`drivetrain:64`、`disc:66`、`rubber:68-74`、`soft:76`、`saddle:78-84`、`tape:86-92`、`inner:94`、`housing:96`、`friction:98` — 均在 `materials.ts`
 3. `matP`：`paintMarine:109-116`、`paintMarineDark:118-125`、`carbonGloss:127-136`
 4. **零引用预设 4 个**：`paintBlue`、`paintBlueDark`、`carbon`、`carbonRaw`
@@ -22,7 +22,7 @@
 ## C. 内联材质声明与实例独立性
 
 9. 模型侧内联材质声明 **212 处**：`<meshStandardMaterial>` 190 + `<meshPhysicalMaterial>` 22
-   - 190 的分布：`brakeModels.tsx:32`、`cockpitModels.tsx:10`、`drivetrainModels.tsx:62`、`frameModels.tsx:44`、`seatingModels.tsx:11`、`wheelModels.tsx:31`（合计 190，与 `grep -rc` 实测一致）
+   - 190 的分布（**standard-only 口径**）：`brakeModels.tsx:32`、`cockpitModels.tsx:10`、`drivetrainModels.tsx:62`、`frameModels.tsx:44`、`seatingModels.tsx:11`、`wheelModels.tsx:31`（合计 190；`grep -rc "<meshStandardMaterial"` 单独实测即得此分布；组合模式 `grep -rc "<meshStandardMaterial\|<meshPhysicalMaterial"` 实得 32/11/63/59/14/33，勿混用两种口径）
    - 22 由总数 212 − 190 得出（`grep -rc "<meshStandardMaterial\|<meshPhysicalMaterial"` 实测 212）
    - 循环内生成的声明会更多（计数为静态出现次数）
 10. **每处 JSX 材质元素生成一个独立实例**：R3F 的 `createInstance` 在 `node_modules/@react-three/fiber/dist/events-0dab3c53.cjs.dev.js:16704` 执行 `child.object = child.props.object ?? new target(...args)` → 未显式传 `object` 时**必定 new 一个实例**
@@ -46,7 +46,7 @@
     - 单件：opacity 0.32、scale 2.4、blur 2.6、far 1.4、resolution 512/128、color `#4a4438` — `PartPreview.tsx:43-51`
 19. 相机：整车 `fov 38, [2.15,1.1,1.65]`（`BikeViewer.tsx:440`）；单件 `fov 40, [0.9,0.55,0.9]`（`PartPreview.tsx:30`）——**相机差异属预期**（取景需求不同），不属需对齐项
 20. 环境与光照清单（两处共用）：`StudioEnvironment` 六个 Lightformer（强度 6.5 / 2.0 / 2.8 / 2.6 / 1.3 / 2.2，`environmentIntensity 0.95`）— `studio.tsx:49-104`；`StudioLights` 四盏方向光 + ambient — `studio.tsx:127-149`
-21. 后处理：`StudioEffects` Bloom 强度 high 档 0.2 / low 档 0.12（`BikeViewer.tsx:294`）、单件 0.28（`PartPreview.tsx:57`）；Bloom 阈值 0.95、Vignette 0.32、SSAO intensity 10 — `studio.tsx:155-194`
+21. 后处理：`StudioEffects` Bloom 强度 high 档 0.2 / low 档 0.12（`BikeViewer.tsx:294`）、单件 **0.18**（`PartPreview.tsx:60`）；Bloom 阈值 0.95、Vignette 0.32、SSAO intensity 10 — `studio.tsx:155-194`
 
 ## F. 已知教训与规范条款
 

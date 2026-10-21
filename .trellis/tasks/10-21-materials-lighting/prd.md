@@ -13,9 +13,9 @@
 - 材质预设 20 个：`mat.*` 17 个 + `matP.*` 3 个；其中 4 个（`paintBlue`/`paintBlueDark`/`carbon`/`carbonRaw`）零引用。
 - 程序化纹理 10 张：8 张在用，`floorGradientTexture` / `brandGlowTexture` 零引用且编码的是已废弃的深色影棚。
 - 模型侧材质声明 212 处（standard 190 + physical 22），全部以 JSX 内联展开预设，**每处一个独立材质实例**（依据 `@react-three/fiber` 的 `createInstance`：`child.object = new target(...)`，见 `research/evidence.md`）。
-- 整车视图与单件预览**并非同一套影棚参数**：曝光 1.02 vs 1.08，直接光强度代数和 5.05 vs 6.55（+29.7%），接触阴影 4 项参数不同。
+- 整车视图与单件预览**并非同一套影棚参数**：曝光 1.02 vs 1.08，直接光强度代数和 5.05 vs 6.55（+29.7%），接触阴影 5 项参数不同（opacity/scale/blur/far/resolution）。
 - `matP.*` 的 `envMapIntensity`（1.3 / 1.25 / 1.1）在当前 `scene.environment` 路径下**不生效**；有效环境强度只有 `scene.environmentIntensity = 0.95`。
-- `roughnessMap` 与基础 `roughness` 是**乘算**：`mat.alu` / `mat.disc` 的有效粗糙度实际为 0.09–0.14，远低于注释所写的 0.32 / 0.3。
+- `roughnessMap` 与基础 `roughness` 是**乘算**：`brushed` 贴图值域 [0.28, 0.44]（`textures.ts:110` 的闭式表达式，可复算），故 `mat.alu` 有效粗糙度 = 0.32×(0.28–0.44) ≈ **0.09–0.14**、`mat.disc` = 0.30×(0.28–0.44) ≈ **0.08–0.13**，均低于注释所写的 0.32 / 0.3。
 
 ## Requirements
 
@@ -45,8 +45,10 @@
   `emissive` / `emissiveIntensity` / `opacity` / `transparent` / `depthWrite`。材质规范必须声明这些字段由交互层独占，
   但需要 A 确认清单是否完整（例如未来是否会加 `color` 覆写）。
 - **D2**：固定相机参数（来自 `10-21-visual-baseline`）：五视角的相机位置、target、fov、视口尺寸、dpr、设备。
-  一致性像素比对需要它作为输入。
+  一致性像素比对需要它作为输入。该工作项还负责产出 `docs/visual-baseline/scripts/capture-baseline.mjs` 与
+  `docs/visual-baseline/perf.json`（**当前均不存在**）—— 本任务只消费，不创建；未到位前 AC9/AC11 的截图与性能记录用人工截图 + 本地记录代替（见 `implement.md`「依赖与阻塞」）。
 - **D3**：`tests/` 的组织约定（文件命名、是否允许新增 `tests/materials.test.ts`）—— `tests/` 属共享契约，双方共同负责。
+  AC5 的一致性测试依赖此项放行；测试实现不得 import 场景/模型文件（理由见 AC5 行）。
 - **D4**：`BikeViewer.tsx` 侧的配合改动窗口：曝光对齐与去掉单件额外补光会影响整车/单件画面，A 拥有交互层，需协调同一窗口。
 - **D5**：B1 引入 GLB 时，资产接口需预留「材质实例是否共享」的检查点（§6.2）。当前无 GLB，不阻塞本任务。
 
@@ -58,9 +60,9 @@
 | AC2 | 预设键与纹理 key 命名合规 | 同上脚本（正则） | 违规 0 条 |
 | AC3 | `colorSpace` 显式声明正确 | 同上脚本 + 运行时抽查 | 颜色类贴图声明 `SRGBColorSpace`；法线/粗糙度类声明 `NoColorSpace`；违规 0 |
 | AC4 | 参数区间合规（R1/R3/R5/R6） | 同上脚本（预设改为纯数据模块后可直接断言） | 违规 0，例外须在 PR 中登记 |
-| AC5 | 整车 / 单件共享影棚参数一致 | `tests/materials.test.ts` 断言两侧引用同一常量 | 共享字段差异 0 |
+| AC5 | 整车 / 单件共享影棚参数一致 | `tests/materials.test.ts`：① import 纯数据模块 `src/three/studioPreset.ts` 断言共享字段；② 用 `node:fs` 读 `BikeViewer.tsx`/`PartPreview.tsx` 文本，断言二者消费同一常量（**禁止 import 场景/模型文件**：链路触达 `textures.ts:20` 的 `document`，Node 下抛 `ReferenceError`，同 `10-21-component-refine` §5.1 根因） | 共享字段差异 0 |
 | AC6 | 直接光强度代数和差异 | 脚本计算 | ≤ 5%（当前 29.7%） |
-| AC7 | 曝光一致 | 脚本 / 断言 | 两侧 `toneMappingExposure` 完全相等（当前 1.02 vs 1.08） |
+| AC7 | 曝光一致 | 脚本 / 断言 | 默认两侧 `toneMappingExposure` 必须完全相等（当前 1.02 vs 1.08）；若 A 确认差异有意，须书面理由 + A approve，并降级为「已记录例外」（设计见 R6） |
 | AC8 | 材质实例不跨零件共享 | 静态扫描禁止 `<primitive object={material}>` 与 `material={...}`；dev 运行时断言（需 A 配合） | 0 处跨 `partId` 共享 |
 | AC9 | 视觉回归可对比 | 五视角截图（改造前 / 后）附于 PR | 5/5 视角齐备，固定参数一致 |
 | AC10 | CI 不退化 | `npm test && npm run build` | 全绿 |

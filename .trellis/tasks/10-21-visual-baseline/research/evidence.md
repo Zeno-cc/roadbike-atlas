@@ -41,7 +41,7 @@
 
 ## E. 环境与几何（本机实测）
 
-26. 未安装 playwright / puppeteer：`node_modules/.bin` 中无对应可执行文件；`~/Library/Caches/ms-playwright` 不存在
+26. 未安装 playwright / puppeteer：`node_modules/.bin` 中无对应可执行文件；`~/Library/Caches/ms-playwright` 目录**存在**但只有运行时文件（`b/`、`daemon/`、`cli-update-check.json`），**无浏览器二进制** → 需用 `puppeteer-core` 复用已安装的 Chrome
 27. 已安装 Chrome `154.0.8037.99`（`/Applications/Google Chrome.app/Contents/MacOS/Google Chrome`）与 Microsoft Edge
 28. 视角 2 试算依据：`wheelR = 0.34`、`rearHub = [-0.415, 0.34, 0]`、`frontHub = [0.575, 0.34, 0]` — `src/three/bikeConfig.ts`
 29. 视角 5 试算依据：`EXPLODE` 表最大位移 `tire: [0, -0.04, 0.88]` — `src/three/interaction.tsx` 的 `EXPLODE` 表
