@@ -179,6 +179,21 @@ CI 名称为 `CI`，已在分支保护里设为必需检查——红灯的 PR �
 2. `git diff --stat` 里有没有出现"你没说过的文件"（误改信号）
 3. 是否动了共享契约却没说
 
+## 十一、任务与知识层（Trellis）
+
+仓库根目录的 `AGENTS.md`、`.trellis/`、`.agents/`、`.codex/` 来自 Trellis（v0.6.17）。它负责"做什么"这一层，与本文档的 Git 流程是**互补而非替代**关系：
+
+- **Trellis 管任务、规范与知识**：任务与 PRD 在 `.trellis/tasks/`；分层编码规范在 `.trellis/spec/`；研究记录与经验沉淀在 `.trellis/workspace/<你的名字>/` 的 journal 里。
+- **GitHub 管合并**：分支、PR、CI、审批、Squash 合并一律以本文档与《技术架构基线》为准。**Trellis 里的任务状态不构成合并许可——该走 PR 的仍然要走 PR**（架构基线 §7.4）。
+- **首次使用先初始化自己的身份**（每人一次；身份文件是本地文件，不会互相覆盖）：
+
+  ```bash
+  python3 ./.trellis/scripts/init_developer.py <你的名字>
+  ```
+
+- `.agents/skills/` 与 `.codex/` 是 AI 工具集成层：按各自使用的工具取用，不用就忽略，**不要删除**（`trellis update` 会重建）。
+- 与《技术架构基线》可能重叠的内容（例如前端分层规范）只保留一份：编码细节写 `.trellis/spec/`，架构边界写基线，冲突时以基线为准（基线 §9.2）。
+
 ---
 
 部署说明见 [README 的"部署"](./README.md#部署)。若后续接入 GitHub Pages 自动部署，流水线同样从 `main` 触发，所以"main 永远可构建"这条约定会被强制执行。
